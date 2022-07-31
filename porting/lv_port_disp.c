@@ -14,6 +14,7 @@
 #include "main.h"
 #include "stm32746g_lcd.h"
 #include "ltdc.h"
+#include "gpio.h"
 /*********************
  *      DEFINES
  *********************/
@@ -36,6 +37,7 @@
 /**********************
  *      TYPEDEFS
  **********************/
+extern DMA2D_HandleTypeDef hdma2d;
 extern DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 extern LTDC_HandleTypeDef hltdc;
 static lv_disp_drv_t disp_drv; /*Descriptor of a display driver*/
@@ -210,14 +212,33 @@ static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 	HAL_StatusTypeDef err;
 
 
+	if((area->x1 == 0) & (area->x2 == 1023))
+	{
+		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
 
+		hltdc.LayerCfg[0].ImageHeight = area->y2 - area->y1;
+		hltdc.LayerCfg[0].ImageWidth  = area->x2 - area->x1;
+
+		__HAL_LTDC_RELOAD_CONFIG(&hltdc);
+		HAL_DMA2D_Start(&hdma2d, (uint32_t) buf_to_flush,  (uint32_t) addr, area->x2 - area->x1, area->y2 - area->y1);
+		HAL_DMA2D_PollForTransfer(&hdma2d, 100);
+
+		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+
+		lv_disp_flush_ready(disp_drv);
+
+	}
+	else
+	{
+		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
 		uint32_t length = (x2_flush - x1_flush + 1);
-		err = HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0,	(uint32_t) buf_to_flush, (uint32_t) addr, length);
-		if (err != HAL_OK)
-		{
-			while (1)
-				; /*Halt on error*/
-		}
+		HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0,	(uint32_t) buf_to_flush, (uint32_t) addr, length);
+
+	}
+
+
+
+
 
 //	if (disp_flush_enabled)
 //	{
@@ -237,7 +258,7 @@ static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 
 	/*IMPORTANT!!!
 	 *Inform the graphics library that you are ready with the flushing*/
-	//lv_disp_flush_ready(disp_drv);
+//	lv_disp_flush_ready(disp_drv);
 }
 void DMA_TransferComplete(DMA_HandleTypeDef *han)
 {
@@ -246,7 +267,9 @@ void DMA_TransferComplete(DMA_HandleTypeDef *han)
 
 	if (y_fill_act > y2_fill)
 	{
+		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
 		SCB_CleanInvalidateDCache();
+
 		SCB_InvalidateICache();
 		lv_disp_flush_ready(&disp_drv);
 	}

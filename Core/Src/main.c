@@ -111,7 +111,7 @@ int main(void)
   MX_DMA_Init();
   MX_DMA2D_Init();
   MX_FMC_Init();
-//  MX_I2C4_Init();
+  MX_I2C4_Init();
   MX_LTDC_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
