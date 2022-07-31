@@ -206,39 +206,58 @@ static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 	y2_fill = area->y2;
 	y_fill_act = area->y1;
 	buf_to_flush = color_p;
-	addr = (hltdc.LayerCfg[0].FBStartAdress + (2 * (y_fill_act * MY_DISP_HOR_RES + area->x1)));
+	addr = (hltdc.LayerCfg[0].FBStartAdress
+			+ (2 * (y_fill_act * MY_DISP_HOR_RES + area->x1)));
 	SCB_CleanInvalidateDCache();
 	SCB_InvalidateICache();
 	HAL_StatusTypeDef err;
+	int32_t lines;
 
-
-	if((area->x1 == 0) & (area->x2 == 1023))
+	if ((area->x1 == 0) & (area->x2 == 1023)
+			& ((area->y2 - area->y1 + 1) > BLOCK_SIZE))
 	{
 		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+		int32_t y;
+		int32_t blocks = (area->y2 - area->y1 + 1) / BLOCK_SIZE;
+		lines = (area->y2 - area->y1 + 1) % BLOCK_SIZE;
+		uint32_t length = (x2_flush - x1_flush + 1) * BLOCK_SIZE;
 
-		hltdc.LayerCfg[0].ImageHeight = area->y2 - area->y1;
-		hltdc.LayerCfg[0].ImageWidth  = area->x2 - area->x1;
+		do
+		{
+				HAL_DMA_Start(&hdma_memtomem_dma2_stream0,
+						(uint32_t) buf_to_flush, (uint32_t) addr, length);
+				HAL_DMA_PollForTransfer(&hdma_memtomem_dma2_stream0,
+						HAL_DMA_FULL_TRANSFER, 0xffff);
 
-		__HAL_LTDC_RELOAD_CONFIG(&hltdc);
-		HAL_DMA2D_Start(&hdma2d, (uint32_t) buf_to_flush,  (uint32_t) addr, area->x2 - area->x1, area->y2 - area->y1);
-		HAL_DMA2D_PollForTransfer(&hdma2d, 100);
+				addr += length;
+				buf_to_flush += length;
+				y_fill_act += BLOCK_SIZE;
+
+			blocks--;
+		} while (blocks > 0);
 
 		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
-
-		lv_disp_flush_ready(disp_drv);
-
+		if (lines == 0)
+		{
+			lv_disp_flush_ready(disp_drv);
+		}
+		else
+		{
+			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+			uint32_t length = (x2_flush - x1_flush + 1);
+			HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0,
+					(uint32_t) buf_to_flush, (uint32_t) addr, length);
+		}
 	}
-	else
-	{
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
-		uint32_t length = (x2_flush - x1_flush + 1);
-		HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0,	(uint32_t) buf_to_flush, (uint32_t) addr, length);
-
-	}
 
 
-
-
+else
+{
+	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+	uint32_t length = (x2_flush - x1_flush + 1);
+	HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0, (uint32_t) buf_to_flush,
+			(uint32_t) addr, length);
+}
 
 //	if (disp_flush_enabled)
 //	{
@@ -256,58 +275,58 @@ static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 //        }
 //	}
 
-	/*IMPORTANT!!!
-	 *Inform the graphics library that you are ready with the flushing*/
+/*IMPORTANT!!!
+ *Inform the graphics library that you are ready with the flushing*/
 //	lv_disp_flush_ready(disp_drv);
 }
 void DMA_TransferComplete(DMA_HandleTypeDef *han)
 {
 
-	y_fill_act++;
+y_fill_act++;
 
-	if (y_fill_act > y2_fill)
+if (y_fill_act > y2_fill)
+{
+	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+	SCB_CleanInvalidateDCache();
+
+	SCB_InvalidateICache();
+	lv_disp_flush_ready(&disp_drv);
+}
+else
+{
+	uint32_t length = (x2_flush - x1_flush + 1);
+	buf_to_flush += x2_flush - x1_flush + 1;
+	addr = (hltdc.LayerCfg[0].FBStartAdress
+			+ (2 * (y_fill_act * MY_DISP_HOR_RES + x1_flush)));
+	if (HAL_DMA_Start_IT(han, (uint32_t) buf_to_flush, (uint32_t) addr, length)
+			!= HAL_OK)
 	{
-		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-		SCB_CleanInvalidateDCache();
-
-		SCB_InvalidateICache();
-		lv_disp_flush_ready(&disp_drv);
+		while (1)
+			; /*Halt on error*/
 	}
-	else
-	{
-		uint32_t length = (x2_flush - x1_flush + 1);
-		buf_to_flush += x2_flush - x1_flush + 1;
-		addr = (hltdc.LayerCfg[0].FBStartAdress
-				+ (2 * (y_fill_act * MY_DISP_HOR_RES + x1_flush)));
-		if (HAL_DMA_Start_IT(han, (uint32_t) buf_to_flush, (uint32_t) addr,
-				length) != HAL_OK)
-		{
-			while (1)
-				; /*Halt on error*/
-		}
-	}
+}
 
-	//lv_disp_flush_ready(&disp_drv);
+//lv_disp_flush_ready(&disp_drv);
 
 }
 /*OPTIONAL: GPU INTERFACE*/
 
 /*If your MCU has hardware accelerator (GPU) then you can use it to fill a memory with a color*/
 static void gpu_fill(lv_disp_drv_t *disp_drv, lv_color_t *dest_buf,
-		lv_coord_t dest_width, const lv_area_t *fill_area, lv_color_t color)
+	lv_coord_t dest_width, const lv_area_t *fill_area, lv_color_t color)
 {
-	/*It's an example code which should be done by your GPU*/
-	int32_t x, y;
-	dest_buf += dest_width * fill_area->y1; /*Go to the first line*/
+/*It's an example code which should be done by your GPU*/
+int32_t x, y;
+dest_buf += dest_width * fill_area->y1; /*Go to the first line*/
 
-	for (y = fill_area->y1; y <= fill_area->y2; y++)
+for (y = fill_area->y1; y <= fill_area->y2; y++)
+{
+	for (x = fill_area->x1; x <= fill_area->x2; x++)
 	{
-		for (x = fill_area->x1; x <= fill_area->x2; x++)
-		{
-			dest_buf[x] = color;
-		}
-		dest_buf += dest_width; /*Go to the next line*/
+		dest_buf[x] = color;
 	}
+	dest_buf += dest_width; /*Go to the next line*/
+}
 }
 #else /*Enable this file at the top*/
 

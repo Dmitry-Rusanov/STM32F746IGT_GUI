@@ -30,8 +30,7 @@ extern "C" {
 #define LV_VER_RES_MAX 600
 
 #define LV_BUF_TYPE 3 // 1 2 3
-#define BIT_WRITE
-
+#define BLOCK_SIZE 60
 /**********************
  *      TYPEDEFS
  **********************/
