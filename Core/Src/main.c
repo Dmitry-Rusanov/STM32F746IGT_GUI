@@ -29,6 +29,17 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "lvgl.h"
+#include "demos/lv_demos.h"
+#include "lv_port_disp.h"
+#include "lv_port_indev.h"
+#include "stm32746g_lcd.h"
+#include "stm32746g_sdram.h"
+#include "GT811.h"
+#include "stdio.h"
+
+
+
 
 /* USER CODE END Includes */
 
@@ -49,7 +60,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t TS_flag;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,10 +111,28 @@ int main(void)
   MX_DMA_Init();
   MX_DMA2D_Init();
   MX_FMC_Init();
-  MX_I2C4_Init();
+//  MX_I2C4_Init();
   MX_LTDC_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, GPIO_PIN_RESET);
+	BSP_SDRAM_Init();
+	BSP_LCD_Init();
+	GT811_Init();
+
+	BSP_LCD_SetLayerVisible(1, DISABLE);
+	BSP_LCD_SelectLayer(0);
+	//	BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
+	//	BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
+	//	BSP_LCD_Clear(BSP_LCD_GetBackColor());
+	//	BSP_LCD_SetFont(&Font24);
+	//	BSP_LCD_DisplayStringAt(0,0, (uint8_t*)"Capacitive touch screen test",CENTER_MODE);
+	//	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+	//	BSP_LCD_DrawHLine(0, 30, 1024);
+	lv_init();
+	lv_port_disp_init();
+	lv_port_indev_init();
+	lv_demo_widgets();
 
   /* USER CODE END 2 */
 
@@ -114,6 +143,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		lv_task_handler();
+		HAL_Delay(3);
   }
   /* USER CODE END 3 */
 }
@@ -183,6 +214,26 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == GPIO_PIN_7)
+	{
+		TS_flag = 1;
+		printf("click\r\n");
+	}
+}
+
+#ifdef __GNUC__
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+  #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif /* __GNUC__ */
+
+PUTCHAR_PROTOTYPE
+{
+	HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFF);
+	return ch;
+}
 
 /* USER CODE END 4 */
 

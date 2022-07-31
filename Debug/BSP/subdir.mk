@@ -1,0 +1,29 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+# Toolchain: GNU Tools for STM32 (9-2020-q2-update)
+################################################################################
+
+# Add inputs and outputs from these tool invocations to the build variables 
+C_SRCS += \
+../BSP/GT811.c \
+../BSP/TS_I2C.c \
+../BSP/stm32746g_lcd.c \
+../BSP/stm32746g_sdram.c 
+
+OBJS += \
+./BSP/GT811.o \
+./BSP/TS_I2C.o \
+./BSP/stm32746g_lcd.o \
+./BSP/stm32746g_sdram.o 
+
+C_DEPS += \
+./BSP/GT811.d \
+./BSP/TS_I2C.d \
+./BSP/stm32746g_lcd.d \
+./BSP/stm32746g_sdram.d 
+
+
+# Each subdirectory must supply rules for building sources it contributes
+BSP/%.o: ../BSP/%.c BSP/subdir.mk
+	arm-none-eabi-gcc "$<" -mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F746xx -c -I../Core/Inc -I../Drivers/STM32F7xx_HAL_Driver/Inc -I../Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F7xx/Include -I../Drivers/CMSIS/Include -I"/home/rus/Yandex.Disk/Projects/stm32_linux/stms2f746/STM32F746IGT_GUI/lvgl" -I"/home/rus/Yandex.Disk/Projects/stm32_linux/stms2f746/STM32F746IGT_GUI/porting" -I"/home/rus/Yandex.Disk/Projects/stm32_linux/stms2f746/STM32F746IGT_GUI/BSP" -I"/home/rus/Yandex.Disk/Projects/stm32_linux/stms2f746/STM32F746IGT_GUI/Fonts" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
+
