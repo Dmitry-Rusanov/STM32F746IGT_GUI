@@ -1,9 +1,6 @@
-../Drivers/CMSIS/Include/core_cm7.h:2265:22:SCB_InvalidateICache	1
-../Drivers/CMSIS/Include/core_cm7.h:2427:22:SCB_CleanInvalidateDCache	3
 ../Drivers/CMSIS/Include/core_cm7.h:2491:22:SCB_CleanDCache_by_Addr	2
-../porting/lv_port_disp.c:70:6:lv_port_disp_init	1
-../porting/lv_port_disp.c:105:13:disp_init	1
-../porting/lv_port_disp.c:114:6:disp_enable_update	1
-../porting/lv_port_disp.c:119:6:disp_disable_update	1
-../porting/lv_port_disp.c:124:13:disp_flush	1
-../porting/lv_port_disp.c:209:6:DMA_TransferComplete	2
+../porting/lv_port_disp.c:48:6:lv_port_disp_init	1
+../porting/lv_port_disp.c:76:6:disp_enable_update	1
+../porting/lv_port_disp.c:84:6:disp_disable_update	1
+../porting/lv_port_disp.c:96:13:disp_init	1
+../porting/lv_port_disp.c:108:13:disp_flush	2

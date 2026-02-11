@@ -1,13 +1,10 @@
 /**
- * @file lv_port_disp_templ.h
- *
+ * @file lv_port_disp.h
+ * Порт дисплея для LVGL на STM32F746 + LTDC + SDRAM
  */
 
-/*Copy this file as "lv_port_disp.h" and set this value to "1" to enable content*/
-#if 1
-
-#ifndef LV_PORT_DISP_TEMPL_H
-#define LV_PORT_DISP_TEMPL_H
+#ifndef LV_PORT_DISP_H
+#define LV_PORT_DISP_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,51 +13,40 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#if defined(LV_LVGL_H_INCLUDE_SIMPLE)
 #include "lvgl.h"
-#else
-#include "../lvgl/lvgl.h"
-#endif
 
 /*********************
  *      DEFINES
  *********************/
-#define MY_DISP_HOR_RES 1024
-#define MY_DISP_VER_RES 600
-#define LV_VER_RES_MAX 600
+#define MY_DISP_HOR_RES     1024
+#define MY_DISP_VER_RES     600
 
-#define LV_BUF_TYPE 3 // 1 2 3
-#define BLOCK_SIZE 60
+// Тип буферизации: 3 = двойная буферизация полного экрана (рекомендуется)
+#define LV_BUF_TYPE         3
 
-/* GPU acceleration */
-#define LV_USE_GPU 1
-#define LV_USE_GPU_STM32_DMA2D 1
-/**********************
- *      TYPEDEFS
- **********************/
+// Размер одного кадра в байтах (RGB565 = 2 байта на пиксель)
+#define LCD_FB_SIZE_BYTES   ((uint32_t)(MY_DISP_HOR_RES * MY_DISP_VER_RES * 2))
+
+// Начальный адрес фреймбуфера в SDRAM
+#define LCD_FB_START_ADDRESS  ((uint32_t)0xD0000000)
 
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-/* Initialize low level display driver */
 void lv_port_disp_init(void);
 
-/* Enable updating the screen (the flushing process) when disp_flush() is called by LVGL
+/**
+ * Включает обновление экрана (вызов disp_flush)
  */
 void disp_enable_update(void);
 
-/* Disable updating the screen (the flushing process) when disp_flush() is called by LVGL
+/**
+ * Отключает обновление экрана
  */
 void disp_disable_update(void);
 
-/**********************
- *      MACROS
- **********************/
-
 #ifdef __cplusplus
-} /*extern "C"*/
+} /* extern "C" */
 #endif
 
-#endif /*LV_PORT_DISP_TEMPL_H*/
-
-#endif /*Disable/Enable content*/
+#endif /* LV_PORT_DISP_H */
