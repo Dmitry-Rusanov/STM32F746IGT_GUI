@@ -31,6 +31,10 @@ extern "C" {
 
 #define LV_BUF_TYPE 3 // 1 2 3
 #define BLOCK_SIZE 60
+
+/* GPU acceleration */
+#define LV_USE_GPU 1
+#define LV_USE_GPU_STM32_DMA2D 1
 /**********************
  *      TYPEDEFS
  **********************/
