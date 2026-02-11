@@ -1,0 +1,14 @@
+../BSP/TS_I2C.c:8:13:delay_us	2
+../BSP/TS_I2C.c:20:6:I2C_Init	1
+../BSP/TS_I2C.c:46:13:SDA_IN	1
+../BSP/TS_I2C.c:63:13:SDA_OUT	1
+../BSP/TS_I2C.c:79:6:I2C_Start	1
+../BSP/TS_I2C.c:101:6:I2C_Stop	1
+../BSP/TS_I2C.c:120:9:I2C_Wait_Ack	3
+../BSP/TS_I2C.c:148:6:I2C_Ack	1
+../BSP/TS_I2C.c:168:6:I2C_NAck	1
+../BSP/TS_I2C.c:187:6:I2C_Send_Byte	3
+../BSP/TS_I2C.c:221:9:I2C_Read_Byte	4
+../BSP/TS_I2C.c:252:9:I2C_Send	3
+../BSP/TS_I2C.c:283:9:I2C_WriteReg	3
+../BSP/TS_I2C.c:320:6:I2C_ReadReg	2

@@ -1,0 +1,9 @@
+../Drivers/CMSIS/Include/core_cm7.h:2265:22:SCB_InvalidateICache	1
+../Drivers/CMSIS/Include/core_cm7.h:2427:22:SCB_CleanInvalidateDCache	3
+../porting/lv_port_disp.c:79:6:lv_port_disp_init	1
+../porting/lv_port_disp.c:172:13:disp_init	1
+../porting/lv_port_disp.c:184:6:disp_enable_update	1
+../porting/lv_port_disp.c:191:6:disp_disable_update	1
+../porting/lv_port_disp.c:199:13:disp_flush	4
+../porting/lv_port_disp.c:282:6:DMA_TransferComplete	3
+../porting/lv_port_disp.c:315:13:gpu_fill	3

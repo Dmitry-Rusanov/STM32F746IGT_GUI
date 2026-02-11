@@ -1,5 +1,7 @@
 "./BSP/GT811.o"
+"./BSP/GT911_user.o"
 "./BSP/TS_I2C.o"
+"./BSP/gt911.o"
 "./BSP/stm32746g_lcd.o"
 "./BSP/stm32746g_sdram.o"
 "./Core/Src/dma.o"

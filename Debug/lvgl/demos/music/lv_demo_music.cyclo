@@ -1,0 +1,7 @@
+../lvgl/demos/music/../../src/hal/../draw/../misc/lv_color.h:593:26:lv_color_hex	1
+../lvgl/demos/music/../../src/core/lv_disp.h:182:26:lv_scr_act	1
+../lvgl/demos/music/lv_demo_music.c:114:6:lv_demo_music	1
+../lvgl/demos/music/lv_demo_music.c:126:14:_lv_demo_music_get_title	2
+../lvgl/demos/music/lv_demo_music.c:132:14:_lv_demo_music_get_artist	2
+../lvgl/demos/music/lv_demo_music.c:138:14:_lv_demo_music_get_genre	2
+../lvgl/demos/music/lv_demo_music.c:144:10:_lv_demo_music_get_track_length	2

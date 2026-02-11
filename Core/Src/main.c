@@ -35,7 +35,7 @@
 #include "lv_port_indev.h"
 #include "stm32746g_lcd.h"
 #include "stm32746g_sdram.h"
-#include "GT811.h"
+#include "GT911.h"
 #include "stdio.h"
 
 /* USER CODE END Includes */
@@ -68,7 +68,18 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void TP_INT_Init()
+{
+	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+	GPIO_InitStruct.Pin = GPIO_PIN_7;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;  // Falling edge (GT911 INT low при касании)
+	GPIO_InitStruct.Pull = GPIO_PULLUP;  // Pull-up, чтобы избежать ложных срабатываний
+	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+	// Включи прерывание в NVIC
+	HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);  // Для линий 5-9 (PD7 - линия 7)
+	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+}
 /* USER CODE END 0 */
 
 /**
@@ -108,15 +119,15 @@ int main(void)
 	MX_DMA_Init();
 	MX_DMA2D_Init();
 	MX_FMC_Init();
-	//MX_I2C4_Init();
+	MX_I2C4_Init();
 	MX_LTDC_Init();
 	MX_USART1_UART_Init();
 	/* USER CODE BEGIN 2 */
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, GPIO_PIN_RESET);
 	BSP_SDRAM_Init();
 	BSP_LCD_Init();
-	GT811_Init();
-
+	GT911_Init();
+	TP_INT_Init();
 	BSP_LCD_SetLayerVisible(1, DISABLE);
 	BSP_LCD_SelectLayer(0);
 	//	BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
@@ -141,7 +152,7 @@ int main(void)
 
 		/* USER CODE BEGIN 3 */
 		lv_task_handler();
-		HAL_Delay(3);
+		//HAL_Delay(3);
 	}
 	/* USER CODE END 3 */
 }

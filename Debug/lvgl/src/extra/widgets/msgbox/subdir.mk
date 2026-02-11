@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (9-2020-q2-update)
+# Toolchain: GNU Tools for STM32 (13.3.rel1)
 ################################################################################
 
 # Add inputs and outputs from these tool invocations to the build variables 
@@ -15,6 +15,13 @@ C_DEPS += \
 
 
 # Each subdirectory must supply rules for building sources it contributes
-lvgl/src/extra/widgets/msgbox/%.o: ../lvgl/src/extra/widgets/msgbox/%.c lvgl/src/extra/widgets/msgbox/subdir.mk
-	arm-none-eabi-gcc "$<" -mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F746xx -c -I../Core/Inc -I../Drivers/STM32F7xx_HAL_Driver/Inc -I../Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F7xx/Include -I../Drivers/CMSIS/Include -I"/home/rus/Yandex.Disk/Projects/stm32_linux/stms2f746/STM32F746IGT_GUI/lvgl" -I"/home/rus/Yandex.Disk/Projects/stm32_linux/stms2f746/STM32F746IGT_GUI/porting" -I"/home/rus/Yandex.Disk/Projects/stm32_linux/stms2f746/STM32F746IGT_GUI/BSP" -I"/home/rus/Yandex.Disk/Projects/stm32_linux/stms2f746/STM32F746IGT_GUI/Fonts" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
+lvgl/src/extra/widgets/msgbox/%.o lvgl/src/extra/widgets/msgbox/%.su lvgl/src/extra/widgets/msgbox/%.cyclo: ../lvgl/src/extra/widgets/msgbox/%.c lvgl/src/extra/widgets/msgbox/subdir.mk
+	arm-none-eabi-gcc "$<" -mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F746xx -c -I../Core/Inc -I../Drivers/STM32F7xx_HAL_Driver/Inc -I../Drivers/STM32F7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F7xx/Include -I../Drivers/CMSIS/Include -I"C:/Users/user/Documents/GIT/STM32F746IGT_GUI/lvgl" -I"C:/Users/user/Documents/GIT/STM32F746IGT_GUI/porting" -I"C:/Users/user/Documents/GIT/STM32F746IGT_GUI/BSP" -I"C:/Users/user/Documents/GIT/STM32F746IGT_GUI/Fonts" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
+
+clean: clean-lvgl-2f-src-2f-extra-2f-widgets-2f-msgbox
+
+clean-lvgl-2f-src-2f-extra-2f-widgets-2f-msgbox:
+	-$(RM) ./lvgl/src/extra/widgets/msgbox/lv_msgbox.cyclo ./lvgl/src/extra/widgets/msgbox/lv_msgbox.d ./lvgl/src/extra/widgets/msgbox/lv_msgbox.o ./lvgl/src/extra/widgets/msgbox/lv_msgbox.su
+
+.PHONY: clean-lvgl-2f-src-2f-extra-2f-widgets-2f-msgbox
 

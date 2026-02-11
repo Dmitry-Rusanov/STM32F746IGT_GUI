@@ -1,0 +1,16 @@
+../BSP/gt911.c:85:16:GT911_Init	3
+../BSP/gt911.c:131:16:GT911_InitWithConfig	9
+../BSP/gt911.c:206:16:GT911_ReadTouch	8
+../BSP/gt911.c:274:16:GT911_ReadConfig	11
+../BSP/gt911.c:367:16:GT911_Calibrate	7
+../BSP/gt911.c:432:16:GT911_SetDeviceMode	1
+../BSP/gt911.c:448:16:GT911_GetDeviceMode	2
+../BSP/gt911.c:467:16:GT911_SoftReset	2
+../BSP/gt911.c:496:13:GT911_Reset	1
+../BSP/gt911.c:524:13:GT911_CalculateCheckSum	2
+../BSP/gt911.c:548:23:GT911_UpdateConfigResolution	3
+../BSP/gt911.c:573:16:GT911_SendConfig	3
+../BSP/gt911.c:615:23:GT911_SetCommandRegister	1
+../BSP/gt911.c:630:23:GT911_GetProductID	3
+../BSP/gt911.c:658:23:GT911_GetStatus	3
+../BSP/gt911.c:686:23:GT911_SetStatus	1
