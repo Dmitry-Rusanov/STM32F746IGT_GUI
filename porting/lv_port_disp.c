@@ -34,6 +34,8 @@
     #define MY_DISP_VER_RES    240
 #endif
 
+// Размер одного экрана в байтах (для проверки и очистки кэша)
+#define SCREEN_SIZE_BYTES   (MY_DISP_HOR_RES * MY_DISP_VER_RES * sizeof(lv_color_t))
 /**********************
  *      TYPEDEFS
  **********************/
@@ -57,8 +59,7 @@ static __IO uint16_t *addr;
  **********************/
 static void disp_init(void);
 
-static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area,
-		lv_color_t *color_p);
+static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p);
 //static void gpu_fill(lv_disp_drv_t * disp_drv, lv_color_t * dest_buf, lv_coord_t dest_width,
 //        const lv_area_t * fill_area, lv_color_t color);
 
@@ -126,8 +127,10 @@ void lv_port_disp_init(void)
 	static lv_disp_draw_buf_t draw_buf_dsc_3;
 //    static lv_color_t buf_3_1[MY_DISP_HOR_RES * MY_DISP_VER_RES];            /*A screen sized buffer*/
 //    static lv_color_t buf_3_2[MY_DISP_HOR_RES * MY_DISP_VER_RES];            /*Another screen sized buffer*/
-	lv_disp_draw_buf_init(&draw_buf_dsc_3, buf1, buf2,
-	MY_DISP_VER_RES * LV_VER_RES_MAX); /*Initialize the display buffer*/
+	lv_disp_draw_buf_init(&draw_buf_dsc_3, buf1, buf2, MY_DISP_VER_RES * LV_VER_RES_MAX); /*Initialize the display buffer*/
+	// Один раз чистим кэш обоих буферов (важно!)
+	SCB_CleanInvalidateDCache_by_Addr((uint32_t*) buf1, SCREEN_SIZE_BYTES);
+	SCB_CleanInvalidateDCache_by_Addr((uint32_t*) buf2, SCREEN_SIZE_BYTES);
 #endif
 	/*-----------------------------------
 	 * Register the display in LVGL
@@ -155,7 +158,7 @@ void lv_port_disp_init(void)
 	disp_drv.draw_buf = &draw_buf_dsc_3;
 #endif
 	/*Required for Example 3)*/
-	//disp_drv.full_refresh = 1;
+	disp_drv.full_refresh = 1;
 	/* Fill a memory array with a color if you have GPU.
 	 * Note that, in lv_conf.h you can enable GPUs that has built-in support in LVGL.
 	 * But if you have a different GPU you can use with this callback.*/
@@ -172,8 +175,7 @@ void lv_port_disp_init(void)
 static void disp_init(void)
 {
 	/*You code here*/
-	HAL_DMA_RegisterCallback(&hdma_memtomem_dma2_stream0,
-			HAL_DMA_XFER_CPLT_CB_ID, DMA_TransferComplete);
+	HAL_DMA_RegisterCallback(&hdma_memtomem_dma2_stream0, HAL_DMA_XFER_CPLT_CB_ID, DMA_TransferComplete);
 
 }
 
@@ -196,9 +198,22 @@ void disp_disable_update(void)
 /*Flush the content of the internal buffer the specific area on the display
  *You can use DMA or any hardware acceleration to do this operation in the background but
  *'lv_disp_flush_ready()' has to be called when finished.*/
-static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area,
-		lv_color_t *color_p)
+static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p)
 {
+	// color_p — это указатель на текущий буфер (buf1 или buf2)
+	// он уже в SDRAM — 0xD0400000 или 0xD0600000
+
+	uint32_t width = lv_area_get_width(area);
+	uint32_t height = lv_area_get_height(area);
+
+	uint32_t fb_addr = hltdc.LayerCfg[0].FBStartAdress + (area->y1 * MY_DISP_HOR_RES + area->x1) * sizeof(lv_color_t);
+
+	// Чистим кэш источника (LVGL буфер)
+	SCB_CleanDCache_by_Addr((uint32_t*) color_p, width * height * sizeof(lv_color_t));
+
+	// Чистим кэш приёмника (framebuffer)
+	SCB_CleanDCache_by_Addr((uint32_t*) fb_addr, width * height * sizeof(lv_color_t));
+
 
 	x1_flush = area->x1;
 	y1_flush = area->y1;
@@ -206,15 +221,13 @@ static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 	y2_fill = area->y2;
 	y_fill_act = area->y1;
 	buf_to_flush = color_p;
-	addr = (hltdc.LayerCfg[0].FBStartAdress
-			+ (2 * (y_fill_act * MY_DISP_HOR_RES + area->x1)));
+	addr = (hltdc.LayerCfg[0].FBStartAdress + (2 * (y_fill_act * MY_DISP_HOR_RES + area->x1)));
 	SCB_CleanInvalidateDCache();
 	SCB_InvalidateICache();
 	HAL_StatusTypeDef err;
 	int32_t lines;
 
-	if ((area->x1 == 0) & (area->x2 == 1023)
-			& ((area->y2 - area->y1 + 1) > BLOCK_SIZE))
+	if ((area->x1 == 0) & (area->x2 == 1023) & ((area->y2 - area->y1 + 1) > BLOCK_SIZE))
 	{
 		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
 		int32_t y;
@@ -224,14 +237,12 @@ static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 
 		do
 		{
-				HAL_DMA_Start(&hdma_memtomem_dma2_stream0,
-						(uint32_t) buf_to_flush, (uint32_t) addr, length);
-				HAL_DMA_PollForTransfer(&hdma_memtomem_dma2_stream0,
-						HAL_DMA_FULL_TRANSFER, 0xffff);
+			HAL_DMA_Start(&hdma_memtomem_dma2_stream0, (uint32_t) buf_to_flush, (uint32_t) addr, length);
+			HAL_DMA_PollForTransfer(&hdma_memtomem_dma2_stream0, HAL_DMA_FULL_TRANSFER, 0xffff);
 
-				addr += length;
-				buf_to_flush += length;
-				y_fill_act += BLOCK_SIZE;
+			addr += length;
+			buf_to_flush += length;
+			y_fill_act += BLOCK_SIZE;
 
 			blocks--;
 		} while (blocks > 0);
@@ -245,19 +256,16 @@ static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 		{
 			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
 			uint32_t length = (x2_flush - x1_flush + 1);
-			HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0,
-					(uint32_t) buf_to_flush, (uint32_t) addr, length);
+			HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0, (uint32_t) buf_to_flush, (uint32_t) addr, length);
 		}
 	}
 
-
-else
-{
-	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
-	uint32_t length = (x2_flush - x1_flush + 1);
-	HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0, (uint32_t) buf_to_flush,
-			(uint32_t) addr, length);
-}
+	else
+	{
+		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+		uint32_t length = (x2_flush - x1_flush + 1);
+		HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0, (uint32_t) buf_to_flush, (uint32_t) addr, length);
+	}
 
 //	if (disp_flush_enabled)
 //	{
@@ -275,36 +283,34 @@ else
 //        }
 //	}
 
-/*IMPORTANT!!!
- *Inform the graphics library that you are ready with the flushing*/
+	/*IMPORTANT!!!
+	 *Inform the graphics library that you are ready with the flushing*/
 //	lv_disp_flush_ready(disp_drv);
 }
 void DMA_TransferComplete(DMA_HandleTypeDef *han)
 {
 
-y_fill_act++;
+	y_fill_act++;
 
-if (y_fill_act > y2_fill)
-{
-	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-	SCB_CleanInvalidateDCache();
-
-	SCB_InvalidateICache();
-	lv_disp_flush_ready(&disp_drv);
-}
-else
-{
-	uint32_t length = (x2_flush - x1_flush + 1);
-	buf_to_flush += x2_flush - x1_flush + 1;
-	addr = (hltdc.LayerCfg[0].FBStartAdress
-			+ (2 * (y_fill_act * MY_DISP_HOR_RES + x1_flush)));
-	if (HAL_DMA_Start_IT(han, (uint32_t) buf_to_flush, (uint32_t) addr, length)
-			!= HAL_OK)
+	if (y_fill_act > y2_fill)
 	{
-		while (1)
-			; /*Halt on error*/
+		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+		SCB_CleanInvalidateDCache();
+
+		SCB_InvalidateICache();
+		lv_disp_flush_ready(&disp_drv);
 	}
-}
+	else
+	{
+		uint32_t length = (x2_flush - x1_flush + 1);
+		buf_to_flush += x2_flush - x1_flush + 1;
+		addr = (hltdc.LayerCfg[0].FBStartAdress + (2 * (y_fill_act * MY_DISP_HOR_RES + x1_flush)));
+		if (HAL_DMA_Start_IT(han, (uint32_t) buf_to_flush, (uint32_t) addr, length) != HAL_OK)
+		{
+			while (1)
+				; /*Halt on error*/
+		}
+	}
 
 //lv_disp_flush_ready(&disp_drv);
 
@@ -312,21 +318,20 @@ else
 /*OPTIONAL: GPU INTERFACE*/
 
 /*If your MCU has hardware accelerator (GPU) then you can use it to fill a memory with a color*/
-static void gpu_fill(lv_disp_drv_t *disp_drv, lv_color_t *dest_buf,
-	lv_coord_t dest_width, const lv_area_t *fill_area, lv_color_t color)
+static void gpu_fill(lv_disp_drv_t *disp_drv, lv_color_t *dest_buf, lv_coord_t dest_width, const lv_area_t *fill_area, lv_color_t color)
 {
-/*It's an example code which should be done by your GPU*/
-int32_t x, y;
-dest_buf += dest_width * fill_area->y1; /*Go to the first line*/
+	/*It's an example code which should be done by your GPU*/
+	int32_t x, y;
+	dest_buf += dest_width * fill_area->y1; /*Go to the first line*/
 
-for (y = fill_area->y1; y <= fill_area->y2; y++)
-{
-	for (x = fill_area->x1; x <= fill_area->x2; x++)
+	for (y = fill_area->y1; y <= fill_area->y2; y++)
 	{
-		dest_buf[x] = color;
+		for (x = fill_area->x1; x <= fill_area->x2; x++)
+		{
+			dest_buf[x] = color;
+		}
+		dest_buf += dest_width; /*Go to the next line*/
 	}
-	dest_buf += dest_width; /*Go to the next line*/
-}
 }
 #else /*Enable this file at the top*/
 
